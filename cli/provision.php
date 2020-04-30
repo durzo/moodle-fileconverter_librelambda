@@ -168,16 +168,20 @@ if ($createstackresponse->code !== 0 ) {
 
 // Print summary.
 cli_heading(get_string('provision:stack', 'fileconverter_librelambda'));
-echo get_string('provision:s3useraccesskey', 'fileconverter_librelambda', $createstackresponse->S3UserAccessKey) . PHP_EOL;
-echo get_string('provision:s3usersecretkey', 'fileconverter_librelambda', $createstackresponse->S3UserSecretKey) . PHP_EOL;
+if (isset($createstackresponse->S3UserAccessKey) && isset($createstackresponse->S3UserSecretKey)) {
+    echo get_string('provision:s3useraccesskey', 'fileconverter_librelambda', $createstackresponse->S3UserAccessKey) . PHP_EOL;
+    echo get_string('provision:s3usersecretkey', 'fileconverter_librelambda', $createstackresponse->S3UserSecretKey) . PHP_EOL;
+}
 echo get_string('provision:inputbucket', 'fileconverter_librelambda', $createstackresponse->InputBucket) . PHP_EOL;
 echo get_string('provision:outputbucket', 'fileconverter_librelambda', $createstackresponse->OutputBucket) . PHP_EOL;
 
 // Set config.
 if ($options['set-config']) {
     cli_heading(get_string('provision:setconfig', 'fileconverter_librelambda'));
-    set_config('api_key', $createstackresponse->S3UserAccessKey, 'fileconverter_librelambda');
-    set_config('api_secret', $createstackresponse->S3UserSecretKey, 'fileconverter_librelambda');
+    if (isset($createstackresponse->S3UserAccessKey) && isset($createstackresponse->S3UserSecretKey)) {
+        set_config('api_key', $createstackresponse->S3UserAccessKey, 'fileconverter_librelambda');
+        set_config('api_secret', $createstackresponse->S3UserSecretKey, 'fileconverter_librelambda');
+    }
     set_config('s3_input_bucket', $createstackresponse->InputBucket, 'fileconverter_librelambda');
     set_config('s3_output_bucket', $createstackresponse->OutputBucket, 'fileconverter_librelambda');
     set_config('api_region', $options['region'], 'fileconverter_librelambda');

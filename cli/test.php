@@ -49,7 +49,7 @@ if ($unrecognized) {
     cli_error(get_string('cliunknowoption', 'admin', $unrecognized));
 }
 
-if ($options['help'] || !$options['keyid'] || !$options['secret'] || !$options['region']
+if ($options['help'] || !$options['region']
     || !$options['input-bucket'] || !$options['output-bucket']) {
     $help = "Command line Librelmbda provision.
 This command line script will provision the Librelambda environment in AWS.

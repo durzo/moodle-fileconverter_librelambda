@@ -97,11 +97,14 @@ class converter implements \core_files\converter_interface {
     public function create_client($handler=null) {
         $connectionoptions = array(
             'version' => 'latest',
-            'region' => $this->config->api_region,
-            'credentials' => [
-                'key' => $this->config->api_key,
-                'secret' => $this->config->api_secret
-            ]);
+            'region' => $this->config->api_region
+        );
+        if (!empty($this->config->api_key) && !empty($this->config->api_secret)) {
+            $connectionoptions['credentials'] = array(
+                    'key' => $this->config->api_key,
+                    'secret' => $this->config->api_secret
+            );
+        }
 
         // Allow handler overriding for testing.
         if ($handler != null) {
@@ -154,9 +157,7 @@ class converter implements \core_files\converter_interface {
     private static function is_config_set(\fileconverter_librelambda\converter $converter) {
         $isset = true;
 
-        if (empty($converter->config->api_key) ||
-            empty($converter->config->api_secret) ||
-            empty($converter->config->s3_input_bucket) ||
+        if (empty($converter->config->s3_input_bucket) ||
             empty($converter->config->s3_output_bucket) ||
             empty($converter->config->api_region)) {
                 $isset = false;

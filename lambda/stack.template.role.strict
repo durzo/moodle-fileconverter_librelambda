@@ -1,0 +1,134 @@
+---
+# This program is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# @copyright   2019 Matt Porritt <mattp@catalyst-au.net>
+# @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >
+  This template will provision all the required resources and infrastructure
+  to convert documents using S3 and Lambda.
+
+Parameters:
+  BucketPrefix:
+    Type: String
+    Default: librelambdamoodle
+    Description: The prefix to use for the input and output buckets.
+  ResourceBucket:
+    Type: String
+    Default: librelambdamoodle-resource
+    Description: The bucket that contains the Lambda archive.
+  LambdaArchiveKey:
+    Type: String
+    Default: lambdaconvert.zip
+    Description: The S3 Key (filename) for the Lambda function archive.
+  LambdaLayerKey:
+    Type: String
+    Default: lo.zip
+    Description: The S3 Key (filename) for the Lambda layer archive.
+
+Resources:
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Description: Lambda Converter Role
+    Properties:
+      RoleName: lambda-convert
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Sid: ''
+          Effect: Allow
+          Principal:
+            Service: lambda.amazonaws.com
+          Action: sts:AssumeRole
+  LambdaPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+        - Effect: Allow
+          Action:
+          - logs:*
+          Resource: arn:aws:logs:*:*:*
+        - Effect: Allow
+          Action:
+          - s3:GetObject
+          - s3:PutObject
+          - s3:DeleteObject
+          Resource:
+          - !Join [ '', ['arn:aws:s3:::', !Ref BucketPrefix, '-', 'input/*'] ]
+          - !Join [ '', ['arn:aws:s3:::', !Ref BucketPrefix, '-', 'output/*'] ]
+          - !Join [ '', ['arn:aws:s3:::', !Ref ResourceBucket, '/*'] ]
+      PolicyName: lambda-convert-policy
+      Roles:
+        - !Ref LambdaRole
+  LambdaOfficeLayer:
+    Type: "AWS::Lambda::LayerVersion"
+    DeletionPolicy: Delete
+    Properties:
+      Content:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaLayerKey
+      Description: The LibreOffice archive to use to convert files
+      LayerName: LambdaOfficeLayer
+  LambdaFunction:
+    Type: AWS::Lambda::Function
+    Description: Lambda Function to convert documents using Libre Office
+    Properties:
+      Code:
+        S3Bucket: !Ref ResourceBucket
+        S3Key: !Ref LambdaArchiveKey
+      Environment:
+        Variables:
+          OutputBucket: !Join [ '-', [!Ref BucketPrefix, 'output'] ]
+      FunctionName: lambdaconvert
+      Handler: lambdaconvert.lambda_handler
+      MemorySize: 256
+      Role: !GetAtt LambdaRole.Arn
+      Runtime: python3.6
+      Timeout: 600
+      Layers:
+        - !Ref LambdaOfficeLayer
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: 'lambda:InvokeFunction'
+      FunctionName: !Ref LambdaFunction
+      Principal: s3.amazonaws.com
+      SourceArn: !Join [ '', ['arn:aws:s3:::', !Ref BucketPrefix, '-', 'input'] ]
+  InputS3Bucket:
+    Type: AWS::S3::Bucket
+    DependsOn: LambdaInvokePermission
+    Properties:
+      BucketName: !Join [ '-', [!Ref BucketPrefix, 'input'] ]
+      AccessControl: Private
+      NotificationConfiguration:
+        LambdaConfigurations:
+        - Event: 's3:ObjectCreated:*'
+          Function: !GetAtt LambdaFunction.Arn
+  OutputS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Join [ '-', [!Ref BucketPrefix, 'output'] ]
+      AccessControl: Private
+
+Outputs:
+  InputBucket:
+    Description: S3 Input Bucket
+    Value: !Ref InputS3Bucket
+  OutputBucket:
+    Description: S3 Output Bucket
+    Value: !Ref OutputS3Bucket

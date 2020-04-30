@@ -147,11 +147,14 @@ class provision {
     public function create_s3_client($handler=null) {
         $connectionoptions = array(
                 'version' => 'latest',
-                'region' => $this->region,
-                'credentials' => [
-                        'key' => $this->keyid,
-                        'secret' => $this->secret
-                ]);
+                'region' => $this->region
+        );
+        if (!empty($this->keyid) && !empty($this->secret)) {
+            $connectionoptions['credentials'] = array(
+                    'key' => $this->keyid,
+                    'secret' => $this->secret
+            );
+        }
 
         // Allow handler overriding for testing.
         if ($handler != null) {
@@ -309,11 +312,14 @@ class provision {
     public function create_cloudformation_client($handler=null) {
         $connectionoptions = array(
             'version' => 'latest',
-            'region' => $this->region,
-            'credentials' => [
-                'key' => $this->keyid,
-                'secret' => $this->secret
-            ]);
+            'region' => $this->region
+        );
+        if (!empty($this->keyid) && !empty($this->secret)) {
+            $connectionoptions['credentials'] = array(
+                    'key' => $this->keyid,
+                    'secret' => $this->secret
+            );
+        }
 
         // Allow handler overriding for testing.
         if ($handler != null) {

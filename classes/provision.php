@@ -31,6 +31,7 @@ use Aws\S3\S3Client;
 use Aws\S3\Exception\S3Exception;
 use Aws\CloudFormation\CloudFormationClient;
 use Aws\CloudFormation\Exception\CloudFormationException;
+use Aws\Sts\StsClient;
 
 /**
  * Class for provisioning AWS resources.
@@ -63,6 +64,13 @@ class provision {
     protected $region;
 
     /**
+     * The AWS IAM Role ARN to assume via STS.
+     *
+     * @var string
+     */
+    protected $rolearn;
+
+    /**
      * The prefix to use for the created AWS S3 buckets.
      *
      * @var string
@@ -90,12 +98,13 @@ class provision {
      * @param string $region The AWS region to create the environment in.
      * @param string $bucketprefix The prefix to use for the created AWS S3 buckets.
      */
-    public function __construct($keyid, $secret, $region, $bucketprefix) {
+    public function __construct($keyid, $secret, $region, $bucketprefix, $rolearn=false) {
         global $CFG;
 
         $this->keyid = $keyid;
         $this->secret = $secret;
         $this->region = $region;
+        $this->rolearn = $rolearn;
 
         if ($bucketprefix == '') {
             $this->bucketprefix = md5($CFG->siteidentifier);
@@ -149,7 +158,26 @@ class provision {
                 'version' => 'latest',
                 'region' => $this->region
         );
-        if (!empty($this->keyid) && !empty($this->secret)) {
+
+        if (!empty($this->rolearn)) {
+            $stsclient = new StsClient([
+                    'version' => 'latest',
+                    'region' => $this->region,
+                    'credentials' => [
+                            'key' => $this->keyid,
+                            'secret' => $this->secret
+                    ]
+            ]);
+            $stsresult = $stsclient->AssumeRole([
+                    'RoleArn' => $this->rolearn,
+                    'RoleSessionName' => 'librelambda_crossaccount_s3',
+            ]);
+            $connectionoptions['credentials'] = array(
+                    'key' => $stsresult['Credentials']['AccessKeyId'],
+                    'secret' => $stsresult['Credentials']['SecretAccessKey'],
+                    'token'  => $stsresult['Credentials']['SessionToken']
+            );
+        } else if (!empty($this->keyid) && !empty($this->secret)) {
             $connectionoptions['credentials'] = array(
                     'key' => $this->keyid,
                     'secret' => $this->secret
@@ -314,7 +342,25 @@ class provision {
             'version' => 'latest',
             'region' => $this->region
         );
-        if (!empty($this->keyid) && !empty($this->secret)) {
+        if (!empty($this->rolearn)) {
+            $stsclient = new StsClient([
+                    'version' => 'latest',
+                    'region' => $this->region,
+                    'credentials' => [
+                            'key' => $this->keyid,
+                            'secret' => $this->secret
+                    ]
+            ]);
+            $stsresult = $stsclient->AssumeRole([
+                    'RoleArn' => $this->rolearn,
+                    'RoleSessionName' => 'librelambda_crossaccount_cf',
+            ]);
+            $connectionoptions['credentials'] = array(
+                    'key' => $stsresult['Credentials']['AccessKeyId'],
+                    'secret' => $stsresult['Credentials']['SecretAccessKey'],
+                    'token'  => $stsresult['Credentials']['SessionToken']
+            );
+        } else if (!empty($this->keyid) && !empty($this->secret)) {
             $connectionoptions['credentials'] = array(
                     'key' => $this->keyid,
                     'secret' => $this->secret

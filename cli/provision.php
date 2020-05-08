@@ -37,7 +37,9 @@ list($options, $unrecognized) = cli_get_params(
         'secret'            => false,
         'help'              => false,
         'region'            => false,
+        'rolearn'           => false,
         'bucket-prefix'     => '',
+        'strict-cf'         => false,
         'set-config'        => false,
     ),
     array(
@@ -62,9 +64,11 @@ Options:
 --secret=STRING           AWS API Secret Access Key.
 --region=STRING           The AWS region to create the environment in.
                           e.g. ap-southeast-2
+--rolearn=STRING          The AWS IAM Role ARN to assume before creating the resources.
 --bucket-prefix=STRING    The prefix to use for the created AWS S3 buckets.
                           Bucket names need to be globally unique.
                           If this isn't provided the a random prefix will be generated.
+--strict-cf               Use a stricter cloudformation template.
 --set-config              Will update the plugin configuration with the resources
                           created by this script.
 
@@ -86,7 +90,8 @@ $provisioner = new \fileconverter_librelambda\provision(
     $options['keyid'],
     $options['secret'],
     $options['region'],
-    $options['bucket-prefix']
+    $options['bucket-prefix'],
+    $options['rolearn']
     );
 
 // Create S3 resource bucket.
@@ -147,7 +152,11 @@ unlink($tmpfname);  // Remove temp file.
 
 // Create Lambda function, IAM roles and the rest of the stack.
 cli_heading(get_string('provision:stack', 'fileconverter_librelambda'));
-$cloudformationpath = $CFG->dirroot . '/files/converter/librelambda/lambda/stack.template';
+if ($options['strict-cf']) {
+    $cloudformationpath = $CFG->dirroot . '/files/converter/librelambda/lambda/stack.template.role.strict';
+} else {
+    $cloudformationpath = $CFG->dirroot . '/files/converter/librelambda/lambda/stack.template';
+}
 
 $params = array(
     'bucketprefix' => $provisioner->get_bucket_prefix(),

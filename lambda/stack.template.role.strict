@@ -44,7 +44,7 @@ Resources:
     Type: AWS::IAM::Role
     Description: Lambda Converter Role
     Properties:
-      RoleName: lambda-convert
+      RoleName: !Join [ '', ['lambda-convert-', !Ref "AWS::Region"] ]
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
         Statement:

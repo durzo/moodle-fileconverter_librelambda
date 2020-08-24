@@ -53,6 +53,7 @@ class converter implements \core_files\converter_interface {
         'ods' => 'application/vnd.oasis.opendocument.spreadsheet',
         'png' => 'image/png',
         'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
         'txt' => 'text/plain',
         'gif' => 'image/gif',
     ];
@@ -454,7 +455,7 @@ class converter implements \core_files\converter_interface {
      */
     public function get_supported_conversions() {
         $conversions = array(
-            'doc', 'docx', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx', 'html', 'odt', 'ods', 'txt', 'png', 'jpg', 'gif', 'pdf'
+            'doc', 'docx', 'rtf', 'xls', 'xlsx', 'ppt', 'pptx', 'html', 'odt', 'ods', 'txt', 'png', 'jpg', 'jpeg', 'gif', 'pdf'
             );
         return implode(', ', $conversions);
     }

@@ -299,6 +299,9 @@ class converter implements \core_files\converter_interface {
         }
 
         // Check input bucket permissions.
+	/*
+	 * Disabled - this operation is very costly as it executes the lambdas each time.
+	 *
         $bucket = $converter->config->s3_input_bucket;
         $permissions = self::have_bucket_permissions($converter, $bucket);
         if (!$permissions->success) {
@@ -313,6 +316,7 @@ class converter implements \core_files\converter_interface {
             debugging('fileconverter_librelambda permissions failure on output bucket');
             return false;
         }
+	*/
 
         return true;
     }

@@ -65,7 +65,9 @@ if ($hassiteconfig) {
         'eu-west-1'      => 'eu-west-1 (Ireland)',
         'eu-west-2'      => 'eu-west-2 (London)',
         'eu-west-3'      => 'eu-west-3 (Paris)',
-        'sa-east-1'      => 'sa-east-1 (Sao Paulo)'
+	'sa-east-1'      => 'sa-east-1 (Sao Paulo)',
+        'us-gov-east-1'  => 'us-gov-east-1 (GovCloud East)',
+        'us-gov-west-1'  => 'us-gov-west-1 (GovCloud West)'
     );
 
     $settings->add(new admin_setting_configselect('fileconverter_librelambda/api_region',
